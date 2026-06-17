@@ -1,0 +1,23 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Exercises Fn::Sub inside a Condition",
+  "Parameters": {
+    "EnvName": {
+      "Type": "String"
+    }
+  },
+  "Conditions": {
+    "HasCustomSuffix": {
+      "Fn::Equals": [
+        { "Fn::Sub": "${EnvName}-suffix" },
+        "prod-suffix"
+      ]
+    }
+  },
+  "Resources": {
+    "Topic": {
+      "Type": "AWS::SNS::Topic",
+      "Condition": "HasCustomSuffix"
+    }
+  }
+}

@@ -300,6 +300,7 @@ impl SkipSynthList {
                     skip!(Language::JAVA, Self::I1024_JAVA_UPDATE_REPLACE),
                 ]
             }
+            TestName::ConditionSub => vec![skip!(Language::GOLANG, Self::I626_GO_COMPILATION)],
             TestName::Bucket | TestName::Vpc => vec![],
         }
     }

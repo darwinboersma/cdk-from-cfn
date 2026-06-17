@@ -20,6 +20,7 @@ const SAM_NODEJS_LAMBDA: &str = "sam_nodejs_lambda";
 const SAM_NODEJS_LAMBDA_ARR_TRANSFORM: &str = "sam_nodejs_lambda_arr_transform";
 const SIMPLE: &str = "simple";
 const VPC: &str = "vpc";
+const CONDITION_SUB: &str = "condition_sub";
 
 const TEST_DEFINITIONS: &[(&str, &str)] = &[
     (BATCH, "BatchStack"),
@@ -38,6 +39,7 @@ const TEST_DEFINITIONS: &[(&str, &str)] = &[
     (SAM_NODEJS_LAMBDA_ARR_TRANSFORM, "SAMNodeJSLambdaArrStack"),
     (SIMPLE, "SimpleStack"),
     (VPC, "VpcStack"),
+    (CONDITION_SUB, "ConditionSubStack"),
 ];
 
 #[proc_macro]
@@ -93,6 +95,7 @@ pub fn test_name_enum(_input: TokenStream) -> TokenStream {
             SamNodejsLambdaArrTransform,
             Simple,
             Vpc,
+            ConditionSub,
         }
 
         impl std::fmt::Display for TestName {
@@ -114,6 +117,7 @@ pub fn test_name_enum(_input: TokenStream) -> TokenStream {
                     TestName::SamNodejsLambdaArrTransform => #SAM_NODEJS_LAMBDA_ARR_TRANSFORM,
                     TestName::Simple => #SIMPLE,
                     TestName::Vpc => #VPC,
+                    TestName::ConditionSub => #CONDITION_SUB,
                 };
                 write!(f, "{}", s)
             }
@@ -138,6 +142,7 @@ pub fn test_name_enum(_input: TokenStream) -> TokenStream {
                     #SAM_NODEJS_LAMBDA_ARR_TRANSFORM => TestName::SamNodejsLambdaArrTransform,
                     #SIMPLE => TestName::Simple,
                     #VPC => TestName::Vpc,
+                    #CONDITION_SUB => TestName::ConditionSub,
                     _ => panic!("Unknown test name: {}", s),
                 }
             }
