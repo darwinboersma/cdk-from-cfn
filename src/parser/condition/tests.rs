@@ -317,6 +317,19 @@ fn condition_ref() {
     assert_eq!(expected, serde_yaml::from_str("Ref: LogicalID").unwrap());
 }
 
+#[test]
+fn condition_sub() {
+    let expected = ConditionValue::Sub("${Foo}-bar".into());
+    assert_eq!(
+        expected,
+        serde_yaml::from_str(r#"!Sub "${Foo}-bar""#).unwrap()
+    );
+    assert_eq!(
+        expected,
+        serde_yaml::from_str(r#"Fn::Sub: "${Foo}-bar""#).unwrap()
+    );
+}
+
 // Functions are boolean operators and Conditions top level must end in a boolean, so this tests
 // confirm failures for using intrinsics incorrectly.
 #[test]

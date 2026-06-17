@@ -455,6 +455,23 @@ fn synthesize_condition_recursive(val: &ConditionIr, class_type: ClassType) -> S
             let str = synthesize_condition_recursive(l1.as_ref(), class_type);
             format!("cdk.Fn.select({index}, {str})")
         }
+        ConditionIr::Sub(pieces) => {
+            // Mirror the resource `Fn::Sub` idiom: an f-string with literal
+            // chunks (braces escaped) and references interpolated as `{...}`.
+            let mut out = String::from("f\"\"\"");
+            for piece in pieces {
+                match piece {
+                    ConditionIr::Str(s) => out.push_str(&s.replace('{', "{{").replace('}', "}}")),
+                    other => {
+                        out.push('{');
+                        out.push_str(&synthesize_condition_recursive(other, class_type));
+                        out.push('}');
+                    }
+                }
+            }
+            out.push_str("\"\"\"");
+            out
+        }
     }
 }
 

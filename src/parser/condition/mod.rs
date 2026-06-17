@@ -131,6 +131,7 @@ pub enum ConditionValue {
     FindInMap(String, Box<ConditionValue>, Box<ConditionValue>),
     Split(String, Box<ConditionValue>),
     Select(usize, Box<ConditionValue>),
+    Sub(String),
     // End of recursion, the base primitives to work with
     String(String),
     Ref(String),
@@ -183,6 +184,7 @@ impl<'de> serde::Deserialize<'de> for ConditionValue {
                         Ok(Self::Value::Select(index, source_array))
                     }
                     "Ref" => Ok(Self::Value::Ref(data.newtype_variant()?)),
+                    "Sub" => Ok(Self::Value::Sub(data.newtype_variant()?)),
                     other => Ok(ConditionFunction::from_variant_access(other, data)?.into()),
                 }
             }
@@ -228,6 +230,7 @@ impl<'de> serde::Deserialize<'de> for ConditionValue {
                         Ok(Self::Value::Select(index, array))
                     }
                     "!Ref" | "Ref" => Ok(Self::Value::Ref(data.next_value()?)),
+                    "!Sub" | "Fn::Sub" => Ok(Self::Value::Sub(data.next_value()?)),
                     other => Ok(ConditionFunction::from_map_access(other, &mut data)?.into()),
                 }
             }

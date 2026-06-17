@@ -6,6 +6,7 @@ use topological_sort::TopologicalSort;
 use super::reference::PseudoParameter;
 
 use crate::ir::reference::{Origin, Reference};
+use crate::ir::sub::{sub_parse_tree, SubValue};
 use crate::parser::condition::{ConditionFunction, ConditionValue};
 use crate::util::Hasher;
 use crate::{CFCResult, Error};
@@ -53,6 +54,7 @@ pub enum ConditionIr {
     Map(String, Box<ConditionIr>, Box<ConditionIr>),
     Split(String, Box<ConditionIr>),
     Select(usize, Box<ConditionIr>),
+    Sub(Vec<ConditionIr>),
 
     // End of recursion, the base primitives to work with
     Str(String),
@@ -110,6 +112,28 @@ impl ConditionValue {
             Self::Select(index, x) => {
                 let x = x.into_ir();
                 ConditionIr::Select(index, Box::new(x))
+            }
+            Self::Sub(template) => {
+                // Conditions may only reference parameters or pseudo-parameters,
+                // so each `${Var}` lowers to a parameter/pseudo ref (mirroring the
+                // `Ref` arm below); literal chunks become `Str`.
+                let pieces = match sub_parse_tree(&template) {
+                    Ok(parts) => parts
+                        .into_iter()
+                        .map(|part| match part {
+                            SubValue::String(s) => ConditionIr::Str(s),
+                            SubValue::Variable(name) => {
+                                let mut origin = Origin::Parameter;
+                                if let Option::Some(s) = PseudoParameter::try_from(&name) {
+                                    origin = Origin::PseudoParameter(s);
+                                }
+                                ConditionIr::Ref(Reference { origin, name })
+                            }
+                        })
+                        .collect(),
+                    Err(_) => vec![ConditionIr::Str(template)],
+                };
+                ConditionIr::Sub(pieces)
             }
             Self::String(x) => ConditionIr::Str(x),
             Self::Ref(name) => {
@@ -211,7 +235,9 @@ impl ConditionValue {
                 key1.find_dependencies(logical_id, topo_sort);
             }
             Self::Function(func) => func.find_dependencies(logical_id, topo_sort),
-            Self::Ref(_) | Self::String(_) => {}
+            // A `Sub` template references only parameters/pseudo-params in a
+            // condition, never other conditions, so it adds no ordering deps.
+            Self::Ref(_) | Self::String(_) | Self::Sub(_) => {}
         }
     }
 }

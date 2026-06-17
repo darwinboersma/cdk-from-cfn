@@ -679,6 +679,7 @@ impl Inspectable for ConditionIr {
             ConditionIr::Condition(_) | ConditionIr::Str(_) | ConditionIr::Ref(_) => false,
             ConditionIr::Split(_, cond) => cond.uses_map_table(name),
             ConditionIr::Select(_, cond) => cond.uses_map_table(name),
+            ConditionIr::Sub(pieces) => pieces.iter().any(|p| p.uses_map_table(name)),
         }
     }
 }
@@ -854,6 +855,29 @@ impl GolangEmitter for ConditionIr {
                 output.text(format!("cdk.Fn_Select(jsii.Number({index:?}), "));
                 str.emit_golang(context, output, None)?;
                 output.text(")");
+            }
+            ConditionIr::Sub(pieces) => {
+                // Mirror the resource `Fn::Sub` idiom: jsii.String(fmt.Sprintf(...))
+                // with literal chunks in the pattern and references as `%v` args.
+                let pattern = pieces
+                    .iter()
+                    .map(|piece| match piece {
+                        ConditionIr::Str(s) => s.clone(),
+                        _ => "%v".into(),
+                    })
+                    .collect::<String>();
+                context.import_fmt();
+                output.text(format!("jsii.String(fmt.Sprintf({pattern:?}"));
+                for piece in pieces {
+                    match piece {
+                        ConditionIr::Str(_) => {}
+                        other => {
+                            output.text(", ");
+                            other.emit_golang(context, output, None)?;
+                        }
+                    }
+                }
+                output.text("))");
             }
         }
         if let Some(trailer) = trailer {

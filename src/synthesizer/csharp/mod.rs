@@ -559,6 +559,22 @@ impl ConditionIr {
                 str.emit_csharp(output, _schema, class_type);
                 output.text(")");
             }
+            ConditionIr::Sub(pieces) => {
+                // Mirror the resource `Fn::Sub` idiom: an interpolated string
+                // with literal chunks inline and references as `{...}`.
+                output.text("$\"");
+                for piece in pieces {
+                    match piece {
+                        ConditionIr::Str(lit) => output.text(lit.clone()),
+                        other => {
+                            output.text("{");
+                            other.emit_csharp(output, _schema, class_type);
+                            output.text("}");
+                        }
+                    }
+                }
+                output.text("\"");
+            }
         }
     }
 }

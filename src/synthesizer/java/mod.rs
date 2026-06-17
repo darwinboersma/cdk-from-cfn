@@ -734,6 +734,18 @@ fn emit_conditions(condition: ConditionIr, class_type: ClassType) -> String {
                 emit_conditions(*str, class_type)
             )
         }
+        ConditionIr::Sub(pieces) => {
+            // Mirror the resource `Fn::Sub` idiom: string concatenation with
+            // literal chunks quoted and references emitted inline.
+            pieces
+                .into_iter()
+                .map(|piece| match piece {
+                    ConditionIr::Str(s) => format!("{s:?}"),
+                    other => emit_conditions(other, class_type),
+                })
+                .collect::<Vec<_>>()
+                .join(" + ")
+        }
     }
 }
 

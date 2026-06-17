@@ -27,6 +27,20 @@ fn test_eq_translation() {
 }
 
 #[test]
+fn test_sub_translation() {
+    // `Fn::Sub` in a condition lowers to a Sub of its parsed pieces: `${Var}`
+    // becomes a parameter reference, literal text becomes a string.
+    let condition_ir = ConditionValue::Sub("${Foo}-bar".into()).into_ir();
+    assert_eq!(
+        ConditionIr::Sub(vec![
+            ConditionIr::Ref(Reference::new("Foo", Origin::Parameter)),
+            ConditionIr::Str("-bar".into()),
+        ]),
+        condition_ir
+    );
+}
+
+#[test]
 fn test_sorting() {
     let a = ConditionFunction::Equals(
         ConditionValue::Ref("Foo".into()),
